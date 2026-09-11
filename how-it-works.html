@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gldtgthr — how it works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Archivo:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#f4f1ea; --ground:#0b0b0c; --dim:#8b8880;
+    --line:rgba(244,241,234,.14);
+    --display:"Archivo Black","Helvetica Neue","Arial Black",Arial,sans-serif;
+    --text:"Archivo",-apple-system,system-ui,"Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0; background:var(--ground); color:var(--ink);
+    font-family:var(--text); font-size:17px; line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px clamp(18px,5vw,56px); border-bottom:1px solid var(--line);
+  }
+  .mark{ font-family:var(--display); font-size:14px; letter-spacing:.15em; text-transform:uppercase }
+  .mark span{ opacity:.55 }
+  .back{ color:var(--dim); font-size:11px; letter-spacing:.14em; text-transform:uppercase; text-decoration:none }
+  .back:hover{ color:var(--ink) }
+
+  main{ max-width:660px; margin:0 auto; padding:clamp(36px,7vw,76px) clamp(18px,5vw,24px) 110px }
+  h1{
+    font-family:var(--display); font-size:clamp(30px,6vw,52px); line-height:1.05;
+    letter-spacing:-.02em; margin:0 0 10px;
+  }
+  .standfirst{ color:var(--dim); font-size:clamp(17px,2vw,20px); margin:0 0 8px; line-height:1.55 }
+  h2{
+    font-family:var(--display); font-size:clamp(17px,2.4vw,23px); line-height:1.25;
+    margin:56px 0 14px; letter-spacing:-.01em;
+  }
+  h3{ font-size:15px; font-weight:700; margin:26px 0 6px }
+  p{ margin:0 0 16px }
+  strong{ font-weight:700 }
+  .dim{ color:var(--dim) }
+
+  ol.steps{ counter-reset:s; list-style:none; padding:0; margin:22px 0 0 }
+  ol.steps li{
+    counter-increment:s; position:relative; padding-left:52px; margin-bottom:26px;
+  }
+  ol.steps li::before{
+    content:counter(s); position:absolute; left:0; top:1px;
+    font-family:var(--display); font-size:13px; width:32px; height:32px;
+    border:1px solid var(--line); display:flex; align-items:center; justify-content:center;
+  }
+  ol.steps b{ display:block; margin-bottom:3px }
+
+  .card{ border:1px solid var(--line); padding:clamp(18px,3vw,26px); margin:24px 0 }
+  .card h3{ margin-top:0 }
+
+  table{ width:100%; border-collapse:collapse; margin:18px 0; font-size:14.5px }
+  th,td{ text-align:left; padding:10px 12px 10px 0; border-bottom:1px solid var(--line); vertical-align:top }
+  th{ color:var(--dim); font-weight:400; font-size:11px; letter-spacing:.12em; text-transform:uppercase }
+  td.yes{ color:var(--ink) }
+  td.no{ color:var(--dim) }
+
+  pre{
+    background:rgba(244,241,234,.05); border:1px solid var(--line);
+    padding:14px; overflow-x:auto; font-size:12.5px; line-height:1.6; margin:6px 0 10px;
+  }
+  .cap{ color:var(--dim); font-size:13px; margin:0 0 26px }
+
+  ul.plain{ padding-left:20px; margin:0 0 16px }
+  ul.plain li{ margin-bottom:9px }
+
+  .pull{
+    border-left:3px solid var(--ink); padding:4px 0 4px 18px; margin:30px 0;
+    font-size:clamp(18px,2.3vw,22px); line-height:1.45;
+  }
+  footer{
+    border-top:1px solid var(--line); padding:26px clamp(18px,5vw,56px) 60px;
+    color:var(--dim); font-size:13px; max-width:660px; margin:0 auto;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="mark">gld<span>tgthr</span></div>
+  <a class="back" href="index.html">← Back</a>
+</header>
+
+<main>
+  <h1>How this actually works</h1>
+  <p class="standfirst">
+    In plain terms, with nothing left out — including the parts that are
+    less flattering.
+  </p>
+
+  <h2>The short version</h2>
+  <p>
+    You are already being watched online. Every shop, every streaming service,
+    every social app writes down what you look at, and most pass some of it to
+    advertisers — whether or not you use us. We use the same information, not
+    to sell you something, but to find the people who are into the same things
+    you are.
+  </p>
+
+  <div class="pull">
+    The watching already happens. We're pointing it at people instead of profit.
+  </div>
+
+  <h2>What happens, step by step</h2>
+  <ol class="steps">
+    <li>
+      <b>You browse, as normal.</b>
+      You look at a pair of trainers on eBay. A tub of something on Amazon.
+      An episode on Netflix. A video. A profile.
+    </li>
+    <li>
+      <b>We read the label the site already put there.</b>
+      Shops and streaming services attach a hidden label to their pages — the
+      product's name and code, the show's title, the video's ID. They do it so
+      that Google, Facebook and advertisers can read it. We read the same label.
+    </li>
+    <li>
+      <b>Your computer works out what it means.</b>
+      That La Croix is a drink. Those trainers are footwear. That episode is
+      television. This happens on your own machine, in a fraction of a second.
+      Nothing is sent anywhere to work it out.
+    </li>
+    <li>
+      <b>It builds up what you're into, and how deep you're in it.</b>
+      Which specific things — which bands, which shows, which shoes — and how
+      much time you actually give them.
+    </li>
+    <li>
+      <b>That only ever gets used against someone else's.</b>
+      Sport 98%. Art 100%. Every number is about two people — never a score of
+      you on your own.
+    </li>
+  </ol>
+
+  <h2>What the percentages actually mean</h2>
+  <p>
+    It's easy to read this as: we decide you're "a music person" and go looking
+    for other music people. That isn't it.
+  </p>
+  <p>
+    <strong>You never get a score on your own.</strong> You won't be told you're
+    80% music — there's nothing to be 80% of. The number only exists between two
+    people, area by area, and it's built from two things:
+  </p>
+  <ul class="plain">
+    <li><strong>The same specific things.</strong> Not "you both like music" —
+      the same bands. Not "you both watch TV" — the same show. That's what
+      pushes a number to the top of the scale, though neither of you is ever
+      told which things they were.</li>
+    <li><strong>A similar depth.</strong> How much you each actually give to
+      that area.</li>
+  </ul>
+  <p>
+    It doesn't have to be the identical thing. Two people who drink different
+    flavours of the same sparkling water, or watch different episodes of the
+    same show, or follow the same channel, come out high — that's a shared
+    taste, not a coincidence. Two people who merely both bought a drink do not.
+  </p>
+  <p>
+    The second one surprises people. If music is your whole life and someone
+    else listens to three bands, you are <em>not</em> a high music match — even
+    if all three of their bands are in your top rotation. Three shared bands
+    against sixty is a coincidence, not a shared life in music, and the maths is
+    built so that comes out low.
+  </p>
+  <p>
+    It also means you needn't like every part of an area to match on it. You
+    match on the corner of it you actually engage with.
+  </p>
+
+  <h2>What it looks at, and what it ignores</h2>
+  <p>
+    The extension can see the pages you open — it has to. But it
+    <strong>only writes something down when the page has published a label for
+    what's on it</strong>: the kind sites attach for search engines and
+    advertisers.
+  </p>
+  <p>
+    Your email doesn't have one. Neither does your bank, your medical portal,
+    your work documents, or a private message. Those pages produce nothing.
+    Not a title, not an address, not a record that you were there.
+  </p>
+
+  <table>
+    <tr><th>Page</th><th>What is kept</th></tr>
+    <tr><td class="yes">A product on Amazon</td><td class="yes">Its name, brand and product code</td></tr>
+    <tr><td class="yes">An episode on Netflix</td><td class="yes">The show and the episode</td></tr>
+    <tr><td class="yes">A video on YouTube</td><td class="yes">The title and the channel</td></tr>
+    <tr><td class="no">Your inbox</td><td class="no">Nothing</td></tr>
+    <tr><td class="no">Your bank</td><td class="no">Nothing</td></tr>
+    <tr><td class="no">A private message</td><td class="no">Nothing</td></tr>
+    <tr><td class="no">Any page with no published label</td><td class="no">Nothing</td></tr>
+  </table>
+
+  <h2>The honest bit about "it's already out there"</h2>
+  <p>
+    It would be easy to tell you none of this is new — that every one of these
+    facts is already collected and passed around, so we're adding nothing.
+    <strong>That's true of each fact on its own, and it isn't the whole
+    truth.</strong> Amazon knows what you looked at on Amazon. Netflix knows
+    what you watched. The advertising code in a shop's page already reports the
+    exact product you viewed. None of that is us.
+  </p>
+  <p>
+    What is genuinely new is that these things end up <strong>in one
+    place</strong>. No shop or ad network sees your Amazon, your Netflix and
+    your YouTube together, and together they say more than any one of them does
+    alone. Pretending otherwise would be the kind of thing we'd rather you
+    didn't have to catch us doing.
+  </p>
+  <p>
+    So here is the actual claim, and it's a better one:
+    <strong>that single place is your own computer.</strong> We never hold it.
+    We couldn't hand it over, sell it, or lose it in a breach, because it isn't
+    ours to hold.
+  </p>
+
+  <h2>What would ever leave your computer</h2>
+  <p>
+    <strong>Until you join, nothing.</strong> Reading pages and building up a
+    picture never touches the internet.
+  </p>
+  <p>
+    When you join, your computer makes a pair of keys. One half is yours and
+    never leaves the machine. The other half goes to the server so people can
+    reach you. Along with it: <strong>a username you choose</strong> (not your
+    real name), <strong>what you're open to</strong> — friends, romance, work —
+    and this:
+  </p>
+  <pre>{ "items": [ { "h": "56e475aa2a159def", "w": 1.12 },
+             { "h": "bf1b70e96e5ab38e", "w": 0.94 } ],
+  "categories": { "music": 3.1, "film": 2.4, "food": 1.1 } }</pre>
+  <p class="cap">
+    Scrambled codes and interest scores — about half a kilobyte, a twentieth of
+    a photo. No titles, no web addresses, no list of sites, no times or dates
+    beyond the day.
+  </p>
+  <p>
+    You can see yours in the extension, exactly as it is sent. It isn't a
+    summary of the real thing — it <em>is</em> the real thing.
+  </p>
+  <p>
+    After that, the only other thing that leaves is <strong>your
+    messages</strong> — and those are locked on your machine before they go,
+    with a key only you and the person you're writing to can make. The server
+    stores something it has no way to open. Nothing else leaves. No analytics,
+    no crash reports, no "usage data".
+  </p>
+
+  <h2>If someone stole the whole database</h2>
+  <p>
+    "We take security seriously" means nothing. Here is one person's entire
+    record, as a thief would have it:
+  </p>
+  <pre>{ "handle": "aa_m2zf",
+  "intents": ["friends"],
+  "publicKey": { "x": "szUVRYoJOKfETZxW…", "y": "TJ_UVi-6BLXrA1y7…" },
+  "signature": { "categories": { "listening.music": 6, "watching.drama": 3 },
+                 "items": [ { "h": "0000000000000001", "w": 3 } ] } }</pre>
+  <p>
+    <strong>They would get a full picture of what someone is into. They would
+    have no idea who that someone is.</strong> No name. No email address. No
+    phone number. No location. Not one web address. No usable password or
+    login. And every message would be an unreadable block of characters,
+    because the keys that open them were never on the server to steal.
+  </p>
+  <p class="cap">
+    We test that by taking the whole database and searching it for anything
+    that would give a person away — including a name written inside a message.
+    If it ever turns up, the code doesn't ship.
+  </p>
+
+  <h2>How you actually meet someone</h2>
+  <p>
+    You see a username, an overall percentage, and where the overlap lives —
+    Sport 98%, Art 100%. That is the whole of it.
+  </p>
+  <p>
+    <strong>It never tells either of you what the overlap was.</strong> Two
+    people who buy the same water see "Food &amp; Drink 100%", not "you both
+    buy LaCroix". The specific things decide the number and are then left
+    alone — you already know what you do, and it isn't ours to hand to someone
+    else.
+  </p>
+  <p>
+    To take it further, you engage. <strong>Nothing happens until they engage
+    back.</strong> One-sided interest gets you nothing: no message, no
+    notification, no way to reach someone who hasn't reached back. When both
+    have, a conversation opens.
+  </p>
+  <p>
+    You can block or report anyone, from inside the conversation. Blocking is
+    immediate and works both ways — they disappear from your matches and you
+    disappear from theirs, with no note explaining why.
+  </p>
+
+  <h2>How you know nobody is reading it</h2>
+  <p>
+    Your messages are locked before they leave your machine, with a key made
+    from your two devices. We store the locked version and cannot open it.
+    That much is straightforward.
+  </p>
+  <p>
+    The harder question is how you know the key belongs to the person you think
+    it does — because <em>we</em> are the ones who hand it over. A dishonest
+    version of us could pass you our own key instead and read everything
+    without breaking any lock. So:
+  </p>
+  <ul class="plain">
+    <li><strong>The key is remembered the first time.</strong> If it ever
+      changes, your app stops. It won't send, it won't show the conversation,
+      and it tells you why. Silently carrying on is how people get read.</li>
+    <li><strong>Every conversation has a safety number.</strong> Sixty digits,
+      shown to both of you. Read them to each other — out loud, on another app,
+      in a pub. If they match, nobody is in the middle. If they don't, stop.</li>
+  </ul>
+  <p class="cap">
+    We test this by having the server turn hostile mid-conversation and swap
+    someone's key for an attacker's. The app must refuse to send. If it ever
+    doesn't, the code doesn't ship.
+  </p>
+  <p class="cap">
+    What we can still see: that your username and someone else's exchanged
+    messages, and when. The contents are hidden from us. Who talks to whom is
+    a harder problem, and we haven't solved it.
+  </p>
+
+  <h2>What we won't claim</h2>
+  <div class="card">
+    <h3>The codes are scrambled, not unbreakable.</h3>
+    <p class="dim">
+      Two people's codes must match for any of this to work, so the scrambling
+      can't be unique to you — and a determined server could work backwards to
+      guess what one stands for. That is easiest for the ordinary words: we
+      send a scrambled code for "grapefruit" as well as for the exact can, so
+      that you match with someone drinking a different brand of the same
+      thing. There are not many such words, and guessing them is not hard.
+      The fix is the two machines comparing lists directly, so the server
+      learns <em>that</em> you matched and never on what. Until that's built,
+      we won't call this part encrypted.
+    </p>
+    <h3>Categories are rough.</h3>
+    <p class="dim">
+      Deciding a page about trainers is "footwear" is simple word matching. It
+      gets things wrong. You can see every guess and delete any of them.
+    </p>
+    <h3>A match is not a friendship.</h3>
+    <p class="dim">
+      Two people can share a taste in films and have nothing else in common.
+      All we can honestly say is that the overlap is real, not a guess.
+    </p>
+    <h3>Two people who never check the number.</h3>
+    <p class="dim">
+      Remembering the key catches it being swapped later. It cannot catch a
+      server that lied from the very first message, before there was anything
+      to compare against. Nothing in software can — that is the one job the
+      safety number does, and it only works if someone reads it out.
+    </p>
+    <h3>The lock is only as safe as your computer.</h3>
+    <p class="dim">
+      Your key lives on your machine. Anyone who has the machine has your
+      conversations — including the old ones — and if you lose it they're gone,
+      with no copy to recover.
+    </p>
+    <h3>Your internet connection still shows where you are.</h3>
+    <p class="dim">
+      Any website you visit can see the address your connection comes from, and
+      so can ours. We don't record it. But we'd be overclaiming if we said a
+      determined operator couldn't.
+    </p>
+  </div>
+
+  <h2>What you control</h2>
+  <ul class="plain">
+    <li><strong>See everything.</strong> Every single thing it has noted, in a list, with what it decided about each one.</li>
+    <li><strong>Delete anything.</strong> One item, one site, or all of it. It goes immediately and completely.</li>
+    <li><strong>Pause it.</strong> One switch. It stops reading anything at all.</li>
+    <li><strong>Politics, health and faith are off.</strong> Never used unless you switch them on — and then only against someone who has too.</li>
+    <li><strong>What you're open to.</strong> Friends, romance, work, or any combination. You only come up for people who want the same. Romance requires confirming you're 18 or over.</li>
+    <li><strong>Who can talk to you.</strong> Only people you have engaged with, after they engage back.</li>
+    <li><strong>Block and report.</strong> Immediate, and it works in both directions.</li>
+    <li><strong>Your key is yours.</strong> Made on your machine, never sent anywhere, and without it nobody can read your conversations — us included.</li>
+    <li><strong>Leaving means leaving.</strong> One button deletes what's on your machine <em>and</em> your account on the server — your profile, your matches, and every message, from both sides of the conversation. Uninstalling alone only clears this machine.</li>
+  </ul>
+
+  <h2>What you don't control — on purpose</h2>
+  <p>
+    You choose what you're open to — friends, romance, work. That's it. You
+    can't pick who comes top, or tell it which of your interests should count
+    for more. There's no dial for "show me people who like what I wish I liked".
+  </p>
+  <p>
+    You see the people you actually overlap with most, and that's it. If you
+    want the picture to change, change what you spend your time on — the
+    picture follows. That's the only lever, and it's the honest one.
+  </p>
+</main>
+
+<footer>
+  gldtgthr · Everything above describes the extension as built. If any of it
+  stops being true, this page is wrong and should be fixed before the code ships.
+</footer>
+
+</body>
+</html>

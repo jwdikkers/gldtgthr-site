@@ -1,0 +1,969 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>gldtgthr</title>
+<script>
+  /* Runs before the webfont stylesheet, which blocks every script after it.
+     Someone on a slow connection can see the page and click while the real
+     script is still waiting behind that stylesheet; without this their click
+     is silently swallowed and they sit through the whole animation. */
+  window.__gldEarlyClick = false;
+  document.addEventListener('click',
+    function(){ window.__gldEarlyClick = true; },
+    { capture: true, once: true });
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#f4f1ea;
+    --ground:#0b0b0c;
+    --display:"Archivo Black", "Helvetica Neue", "Arial Black", Arial, sans-serif;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;overflow:hidden;background:var(--ground);color:var(--ink)}
+  body{-webkit-font-smoothing:antialiased}
+
+  #stage{position:fixed; inset:0; overflow:hidden}
+
+  /* the flow box: real text, real font, browser does the wrapping.
+     height is auto so we can measure the natural block height while fitting. */
+  #flow{
+    position:absolute; left:0; top:0; width:100%; height:auto;
+    font-family:var(--display); font-weight:400;
+    text-align:justify; text-justify:inter-word;
+    font-kerning:none; font-variant-ligatures:none;
+    text-transform:uppercase;
+    word-break:normal; overflow-wrap:normal; hyphens:none;
+    color:var(--ink);
+  }
+
+  /* one span per printable character. inline while flowing (so spaces
+     between them stay real break opportunities), absolute once frozen. */
+  .ch{ display:inline; opacity:0 }
+  .ch.on{ opacity:1 }
+  .ch.abs{
+    position:absolute; left:0; top:0;
+    white-space:pre; will-change:transform, opacity;
+  }
+  .ch.gone{ opacity:0 !important; transition:opacity .16s linear }
+  .ch.drop{
+    transition:transform var(--dropms,650ms) cubic-bezier(.5,0,1,.5),
+               opacity var(--dropms,650ms) ease-in;
+    opacity:0;
+  }
+
+  #statement{
+    position:fixed; left:50%; bottom:clamp(16px,4vh,42px); transform:translateX(-50%);
+    width:min(900px,88vw); text-align:center;
+    font-family:var(--display); font-size:clamp(9px,1.05vw,12px);
+    line-height:1.85; letter-spacing:.09em; text-transform:uppercase;
+    color:rgba(244,241,234,.40); opacity:0; transition:opacity .9s ease;
+    pointer-events:none;
+  }
+  #statement b{color:var(--ink)}
+  #how{
+    position:fixed; left:clamp(14px,3vw,26px); top:clamp(14px,3vw,26px);
+    font-family:var(--display); font-size:9px; letter-spacing:.22em;
+    text-transform:uppercase; color:rgba(244,241,234,.32);
+    text-decoration:none; opacity:0; transition:opacity .6s ease; padding:6px 2px;
+    z-index:6;
+  }
+  #how:hover{ color:var(--ink) }
+  #replay{
+    position:fixed; right:clamp(14px,3vw,26px); top:clamp(14px,3vw,26px);
+    font-family:var(--display); font-size:9px; letter-spacing:.22em;
+    text-transform:uppercase; color:rgba(244,241,234,.32);
+    background:none; border:0; cursor:pointer; opacity:0;
+    transition:opacity .6s ease; padding:6px 2px;
+  }
+  #replay:hover{color:var(--ink)}
+  .shown{opacity:1 !important}
+
+  /* ---------- call to action ---------- */
+  #cta{
+    position:fixed; left:50%; top:0; transform:translateX(-50%);
+    display:flex; gap:clamp(8px,1.2vw,14px); align-items:stretch;
+    opacity:0; visibility:hidden; transition:opacity .7s ease; z-index:5;
+  }
+  #cta.shown{ opacity:1; visibility:visible }
+  .btn{
+    font-family:var(--display); text-transform:uppercase;
+    font-size:clamp(10px,1.05vw,13px); letter-spacing:.13em; line-height:1;
+    padding:clamp(12px,1.6vh,16px) clamp(18px,2.4vw,30px);
+    border:1px solid transparent; border-radius:0; cursor:pointer;
+    white-space:nowrap; -webkit-font-smoothing:antialiased;
+    transition:background .18s ease, color .18s ease, border-color .18s ease;
+  }
+  .btn.primary{ background:var(--ink); color:var(--ground) }
+  .btn.primary:hover{ background:#ffffff }
+  .btn.ghost{ background:none; color:var(--ink); border-color:rgba(244,241,234,.34) }
+  .btn.ghost:hover{ border-color:var(--ink) }
+  .btn:focus-visible{ outline:2px solid var(--ink); outline-offset:3px }
+
+  /* ---------- panel ---------- */
+  #sheet{
+    position:fixed; inset:0; z-index:20;
+    display:flex; align-items:center; justify-content:center;
+    background:rgba(11,11,12,.82); padding:24px;
+  }
+  #sheet[hidden]{ display:none }
+  .sheet-inner{
+    width:min(560px,92vw); background:var(--ground);
+    border:1px solid rgba(244,241,234,.28); padding:clamp(24px,4vw,40px);
+    max-height:86vh; overflow:auto;
+  }
+  .sheet-inner h2{
+    font-family:var(--display); text-transform:uppercase; margin:0 0 18px;
+    font-size:clamp(13px,1.5vw,17px); letter-spacing:.1em; color:var(--ink);
+  }
+  .sheet-inner p{
+    margin:0 0 14px; color:rgba(244,241,234,.72);
+    font-family:var(--display); font-weight:400;
+    font-size:clamp(11px,1.05vw,13px); line-height:1.75; letter-spacing:.02em;
+  }
+  .sheet-inner p.note{ color:rgba(244,241,234,.45) }
+  #sheetClose{ margin-top:10px }
+
+  #err{
+    position:fixed; inset:auto 0 0 0; margin:0; padding:14px 18px;
+    background:var(--ink); color:var(--ground); font:700 12px/1.5 ui-monospace,Menlo,monospace;
+    white-space:pre-wrap; display:none; z-index:99;
+  }
+</style>
+</head>
+<body>
+
+<div id="stage" aria-hidden="true">
+  <div id="flow"></div>
+</div>
+
+<p id="statement"></p>
+
+<div id="cta">
+  <button id="install" class="btn primary" type="button">Add to browser</button>
+  <button id="login" class="btn ghost" type="button">Log in</button>
+</div>
+
+<div id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle" hidden>
+  <div class="sheet-inner">
+    <h2 id="sheetTitle"></h2>
+    <div id="sheetBody"></div>
+    <button id="sheetClose" class="btn ghost" type="button">Close</button>
+  </div>
+</div>
+
+<a id="how" href="how-it-works.html">How it works</a>
+<button id="replay" type="button">Replay</button>
+<pre id="err"></pre>
+
+<script>
+(function(){
+'use strict';
+
+/* ================================================================== *
+ * CONFIG
+ * ================================================================== */
+const CFG = {
+  TEXT: "What if there was a tool you could use that would help you actually connect "
+      + "with people instead of being isolated when you are glued to your screen — "
+      + "and that it could even be used to find each other and bring you together "
+      + "through your shared interests and experiences derived from your screen life?",
+
+  KEEP_A: "glued",      // survivor that runs FORWARD along the ribbon
+  KEEP_B: "together",   // survivor that runs BACKWARD along the ribbon
+
+  LINE_FACTOR: 1.02,    // leading used while searching for the fitting size
+
+  TYPE_MS_PER_CHAR: 11,
+  PAUSE_AFTER_TYPE: 1200,
+  DELETE_MS: 2600,
+  PAUSE_AFTER_DELETE: 320,
+
+  TRAVEL_MS: 950,           // accelerating run-up, fastest at the hit
+  IMPACT_RAMP_MS: 130,      // compression building over the last stretch
+  SQUASH_MS: 520,           // spring back out of the squash
+  TIGHTEN_EM: 0.13,         // how far past their place they crush, per gap
+
+  PAUSE_BEFORE_VOWELS: 620,
+  VOWEL_DROP_MS: 620,
+  CLOSE_LEAD: 200,          // vowels start falling, then the gaps slam shut
+  CLOSE_MS: 520,
+  GROW_LEAD: 180,
+  GROW_MS: 780,
+
+  FONT_WAIT_MS: 1200,       // never wait longer than this for the webfont
+  FINAL_SCALE: true,
+  FINAL_WIDTH_FRAC: 0.70,
+  FINAL_MAX_HEIGHT_FRAC: 0.34,
+  SHOW_STATEMENT_AT_END: true
+};
+
+/* Wire these up when they exist and the buttons stop explaining
+   themselves and start working. Until then each button opens a panel
+   that says plainly what it will do. */
+const ENDPOINTS = {
+  install: null,   // e.g. 'https://chromewebstore.google.com/detail/<id>'
+  login:   null    // e.g. 'https://gldtgthr.com/login'
+};
+
+/* ================================================================== *
+ * boot + visible failure surface
+ * ================================================================== */
+const stage = document.getElementById('stage');
+const flow  = document.getElementById('flow');
+const statementEl = document.getElementById('statement');
+const replayBtn   = document.getElementById('replay');
+const howLink     = document.getElementById('how');
+const cta         = document.getElementById('cta');
+const installBtn  = document.getElementById('install');
+const loginBtn    = document.getElementById('login');
+const sheet       = document.getElementById('sheet');
+const sheetTitle  = document.getElementById('sheetTitle');
+const sheetBody   = document.getElementById('sheetBody');
+const sheetClose  = document.getElementById('sheetClose');
+const errEl = document.getElementById('err');
+
+function fail(e){
+  errEl.style.display = 'block';
+  errEl.textContent = 'gldtgthr failed: ' + (e && e.stack ? e.stack : e);
+  console.error('[gldtgthr]', e);
+}
+window.addEventListener('error', function(ev){ fail(ev.error || ev.message); });
+
+const TEXT = CFG.TEXT;
+
+/* ================================================================== *
+ * survivors
+ * ================================================================== */
+function findWord(w){
+  const m = new RegExp('\\b' + w + '\\b', 'i').exec(TEXT);
+  if (!m) throw new Error('survivor word "' + w + '" is not present in TEXT');
+  return { start:m.index, len:m[0].length };
+}
+const A = findWord(CFG.KEEP_A);
+const B = findWord(CFG.KEEP_B);
+
+const idxA = [], idxB = [];
+for (let i = 0; i < A.len; i++) idxA.push(A.start + i);
+for (let i = 0; i < B.len; i++) idxB.push(B.start + i);
+
+const keep = new Set(idxA.concat(idxB));
+const survivorIdx = idxA.concat(idxB);          // final left-to-right order
+const isVowel = i => /[AEIOU]/i.test(TEXT[i]);
+const consonants = survivorIdx.filter(i => !isVowel(i));
+const vowels     = survivorIdx.filter(i =>  isVowel(i));
+
+/* ================================================================== *
+ * DOM: a span per printable char, plain text nodes for the spaces so
+ * the browser still has real break opportunities to wrap on.
+ * ================================================================== */
+const spans = new Array(TEXT.length).fill(null);
+(function build(){
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < TEXT.length; i++){
+    if (TEXT[i] === ' '){ frag.appendChild(document.createTextNode(' ')); continue; }
+    const el = document.createElement('span');
+    el.className = 'ch';
+    el.textContent = TEXT[i];
+    spans[i] = el;
+    frag.appendChild(el);
+  }
+  flow.appendChild(frag);
+})();
+
+/* ================================================================== *
+ * LAYOUT
+ *   fit()    - biggest type size at which the whole sentence still fits
+ *   freeze() - measure every glyph, lock it in place absolutely, and
+ *              build the ribbon (the tracks) out of the typed lines
+ * ================================================================== */
+let W = 0, H = 0, fontSize = 0, lineCount = 1;
+const M = new Array(TEXT.length).fill(null);   // per char: {x,y,w,h,line,s}
+let lines = [];                                // {y,x0,x1,len,cum}
+let ribbon = 0;
+
+/* A blockified span's box height is the inherited line-height, not the ink,
+   so centring the finished wordmark needs two things the layout box cannot
+   give: where the baseline sits inside the box, and where the ink sits
+   relative to the baseline. Both are MEASURED rather than derived - the ink
+   by rasterising the real glyphs and scanning pixels, the baseline by a
+   zero-height inline probe whose top rests exactly on it. */
+const FM = { cap:0.72, capDesc:0.0, widthPerEm:0, match:1 };
+const mcv = document.createElement('canvas');
+const mcx = mcv.getContext('2d', { willReadFrequently:true });
+
+function measureFontMetrics(){
+  const fam = getComputedStyle(flow).fontFamily;
+  const P = 100, BASE = 150;
+  mcv.width = 900; mcv.height = 260;
+  mcx.font = '400 ' + P + 'px ' + fam;
+  FM.widthPerEm = mcx.measureText('GLDTGTHR').width / P;
+
+  mcx.fillStyle = '#000'; mcx.fillRect(0, 0, mcv.width, mcv.height);
+  mcx.fillStyle = '#fff'; mcx.textBaseline = 'alphabetic';
+  mcx.fillText('GLDTGTHR', 4, BASE);
+
+  const px = mcx.getImageData(0, 0, mcv.width, mcv.height).data;
+  let top = -1, bot = -1;
+  for (let y = 0; y < mcv.height; y++){
+    let hit = false;
+    for (let x = 0; x < mcv.width; x++){
+      if (px[(y * mcv.width + x) * 4] > 128){ hit = true; break; }
+    }
+    if (hit){ if (top < 0) top = y; bot = y; }
+  }
+  if (top >= 0){
+    FM.cap     = (BASE - top) / P;          // ink above the baseline
+    FM.capDesc = (bot + 1 - BASE) / P;      // overshoot below it
+    if (FM.capDesc < 0) FM.capDesc = 0;
+  }
+}
+
+/* baseline offset from the top of a frozen span's box, at a given size */
+function baselineFromTop(size){
+  const probe = document.createElement('span');
+  probe.className = 'ch abs on';
+  probe.style.fontSize = size + 'px';
+  probe.style.transform = 'translate3d(0px,0px,0)';
+  probe.textContent = 'G';
+  const anchor = document.createElement('i');
+  anchor.style.cssText = 'display:inline-block;width:0;height:0;vertical-align:baseline';
+  probe.appendChild(anchor);
+  flow.appendChild(probe);
+  const pb = probe.getBoundingClientRect();
+  const ab = anchor.getBoundingClientRect();
+  flow.removeChild(probe);
+  return ab.top - pb.top;
+}
+
+function unfreeze(){
+  for (let i = 0; i < TEXT.length; i++){
+    if (!spans[i]) continue;
+    spans[i].classList.remove('abs');
+    spans[i].style.transform = '';
+    spans[i].style.fontSize = '';
+  }
+}
+
+function fit(){
+  W = window.innerWidth; H = window.innerHeight;
+  flow.style.lineHeight = String(CFG.LINE_FACTOR);
+  let lo = 6, hi = Math.max(8, H), best = 6;
+  for (let it = 0; it < 24; it++){
+    const F = (lo + hi) / 2;
+    flow.style.fontSize = F + 'px';
+    if (flow.offsetHeight <= H){ best = F; lo = F; } else { hi = F; }
+  }
+  fontSize = best;
+  flow.style.fontSize = fontSize + 'px';
+}
+
+function freeze(){
+  /* --- read pass 1: how many lines did we end up with? --- */
+  const tops = [];
+  for (let i = 0; i < TEXT.length; i++){
+    if (!spans[i]) continue;
+    const t = Math.round(spans[i].getBoundingClientRect().top * 2) / 2;
+    if (tops.indexOf(t) === -1) tops.push(t);
+  }
+  lineCount = Math.max(1, tops.length);
+
+  /* --- spread those lines to fill the viewport exactly --- */
+  flow.style.lineHeight = (H / lineCount) + 'px';
+
+  /* --- read pass 2: final geometry of every glyph --- */
+  const rects = new Array(TEXT.length).fill(null);
+  for (let i = 0; i < TEXT.length; i++){
+    if (spans[i]) rects[i] = spans[i].getBoundingClientRect();
+  }
+
+  const rowTops = [];
+  for (let i = 0; i < TEXT.length; i++){
+    if (!rects[i]) continue;
+    const t = Math.round(rects[i].top * 2) / 2;
+    if (rowTops.indexOf(t) === -1) rowTops.push(t);
+  }
+  rowTops.sort(function(a,b){ return a - b; });
+
+  lines = rowTops.map(function(t){
+    return { y:t, x0:Infinity, x1:-Infinity, len:0, cum:0 };
+  });
+
+  for (let i = 0; i < TEXT.length; i++){
+    if (!rects[i]) continue;
+    const r = rects[i];
+    const li = rowTops.indexOf(Math.round(r.top * 2) / 2);
+    M[i] = { x:r.left, y:r.top, w:r.width, h:r.height, line:li, s:0 };
+    const L = lines[li];
+    if (r.left  < L.x0) L.x0 = r.left;
+    if (r.right > L.x1) L.x1 = r.right;
+  }
+
+  ribbon = 0;
+  for (let k = 0; k < lines.length; k++){
+    lines[k].cum = ribbon;
+    lines[k].len = Math.max(1, lines[k].x1 - lines[k].x0);
+    ribbon += lines[k].len;
+  }
+
+  /* every glyph's coordinate along the ribbon */
+  for (let i = 0; i < TEXT.length; i++){
+    if (M[i]) M[i].s = lines[M[i].line].cum + (M[i].x - lines[M[i].line].x0);
+  }
+
+  /* --- write pass: lock each glyph where the browser put it --- */
+  for (let i = 0; i < TEXT.length; i++){
+    if (!spans[i]) continue;
+    spans[i].classList.add('abs');
+    place(spans[i], M[i].x, M[i].y);
+  }
+}
+
+function place(el, x, y, size){
+  el.style.transform = 'translate3d(' + x + 'px,' + y + 'px,0)';
+  if (size !== undefined) el.style.fontSize = size + 'px';
+}
+
+/* ribbon coordinate -> screen position.
+   `w` is the glyph's own width: a letter that would hang off the end of a
+   line wraps to the start of the next one instead of being clipped by the
+   screen edge - the same carriage return the typed text made. */
+function xyOf(s, w){
+  w = w || 0;
+  if (s < 0) s = 0;
+  if (s > ribbon) s = ribbon;
+  let k = lines.length - 1;
+  for (let i = 0; i < lines.length; i++){
+    if (s < lines[i].cum + lines[i].len){ k = i; break; }
+  }
+  let u = s - lines[k].cum;
+  const usable = lines[k].len - w;
+  if (w > 0 && u > usable && k < lines.length - 1){
+    k += 1;
+    u = u - usable;
+    const maxU = Math.max(0, lines[k].len - w);
+    if (u > maxU) u = maxU;
+  }
+  if (u < 0) u = 0;
+  return { x: lines[k].x0 + u, y: lines[k].y, line:k };
+}
+
+/* rigid-word helpers: internal offsets measured along the ribbon */
+function wordOffsets(idx){
+  const s0 = M[idx[0]].s;
+  return idx.map(i => M[i].s - s0);
+}
+function wordWidth(idx){
+  const last = idx[idx.length - 1];
+  return (M[last].s + M[last].w) - M[idx[0]].s;
+}
+
+let offA = [], offB = [], sStartA = 0, sStartB = 0, sTargetA = 0, sTargetB = 0, centreLine = 0;
+
+function computeTargets(){
+  offA = wordOffsets(idxA);
+  offB = wordOffsets(idxB);
+  sStartA = M[idxA[0]].s;
+  sStartB = M[idxB[0]].s;
+
+  const wA = wordWidth(idxA), wB = wordWidth(idxB);
+  centreLine = Math.floor((lines.length - 1) / 2);
+  const L = lines[centreLine];
+  const x0 = (W - (wA + wB)) / 2;                 // centre-aligned on screen
+  sTargetA = L.cum + (x0 - L.x0);
+  sTargetB = sTargetA + wA;                       // locked together, no gap
+}
+
+function relayout(){
+  finalGeo = null; collisionCache = null; closeCache = null;
+  unfreeze();
+  fit();
+  measureFontMetrics();
+  freeze();
+  computeTargets();
+  /* sanity: did the canvas resolve the same face the DOM is using? */
+  let sum = 0; for (const i of consonants) sum += M[i].w;
+  FM.match = sum ? (FM.widthPerEm * fontSize) / sum : 1;
+}
+
+/* ================================================================== *
+ * TIMELINE
+ * ================================================================== */
+const T = {};
+(function buildTimeline(){
+  T.typeEnd     = TEXT.length * CFG.TYPE_MS_PER_CHAR;
+  T.delStart    = T.typeEnd + CFG.PAUSE_AFTER_TYPE;
+  T.delEnd      = T.delStart + CFG.DELETE_MS;
+  T.travelStart = T.delEnd + CFG.PAUSE_AFTER_DELETE;
+  T.travelEnd   = T.travelStart + CFG.TRAVEL_MS;      // impact 1
+  T.vowelStart  = T.travelEnd + CFG.PAUSE_BEFORE_VOWELS;
+  T.vowelEnd    = T.vowelStart + CFG.VOWEL_DROP_MS;
+  T.closeStart  = T.vowelStart + CFG.CLOSE_LEAD;
+  T.closeEnd    = T.closeStart + CFG.CLOSE_MS;        // impact 2
+  T.growStart   = T.closeEnd + CFG.SQUASH_MS + CFG.GROW_LEAD;
+  T.growEnd     = T.growStart + CFG.GROW_MS;
+  T.settleEnd   = T.growEnd;
+})();
+
+const clamp01 = v => v < 0 ? 0 : v > 1 ? 1 : v;
+const easeInQuad   = t => t * t;
+const easeInCubic  = t => t * t * t;               // fastest at the moment of impact
+const easeOutCubic = t => 1 - Math.pow(1 - t, 3);
+
+/* Compression as the two halves make contact: builds over the last
+   IMPACT_RAMP_MS of the approach, so they are already crushing when
+   they meet rather than popping on one frame. */
+function impactRamp(t, tHit){
+  return easeInQuad(clamp01((t - (tHit - CFG.IMPACT_RAMP_MS)) / CFG.IMPACT_RAMP_MS));
+}
+
+/* Damped spring released at the moment of impact: 1 = fully squashed,
+   crosses its resting place around 40% through, overshoots loose by
+   about a tenth, then settles to exactly 0. */
+function spring(tau){
+  if (tau < 0 || tau >= CFG.SQUASH_MS) return 0;
+  const x = tau / CFG.SQUASH_MS;
+  return Math.exp(-2.0 * x) * Math.cos(3.93 * x) * (1 - x * x * x);
+}
+
+/* where each survivor sits inside the locked-up block, so tracking can be
+   crushed symmetrically about its centre */
+const blockPos = {};
+survivorIdx.forEach(function(i, k){ blockPos[i] = k; });
+const MID13 = (survivorIdx.length - 1) / 2;
+const MID8  = (consonants.length - 1) / 2;
+
+let deleteOrder = [];
+function shuffleDeletionOrder(){
+  deleteOrder = [];
+  for (let i = 0; i < TEXT.length; i++){
+    if (spans[i] && !keep.has(i)) deleteOrder.push(i);
+  }
+  for (let i = deleteOrder.length - 1; i > 0; i--){
+    const j = (Math.random() * (i + 1)) | 0;
+    const t = deleteOrder[i]; deleteOrder[i] = deleteOrder[j]; deleteOrder[j] = t;
+  }
+}
+
+/* ================================================================== *
+ * STATE + RENDER  (render(t) draws any moment from scratch, which is
+ * what makes resize, replay and reduced-motion all free)
+ * ================================================================== */
+let t0 = 0, shownUpto = 0, deletedUpto = 0;
+let vowelsDropped = false, finished = false, phase = 'idle';
+
+function collisionXY(i){
+  const inA = keep.has(i) && i >= A.start && i < A.start + A.len;
+  const base = inA ? sTargetA : sTargetB;
+  const off  = inA ? offA[i - A.start] : offB[i - B.start];
+  return xyOf(base + off, M[i].w);
+}
+
+/* the 13 letters' resting places at the moment of collision */
+let collisionCache = null;
+function collisionOf(i){
+  if (!collisionCache){
+    collisionCache = {};
+    for (const j of survivorIdx) collisionCache[j] = collisionXY(j);
+  }
+  return collisionCache[i];
+}
+
+/* the 8 consonants packed shut at text size, centred on the centre line -
+   where they land once the vowels have fallen out from between them */
+let closeCache = null;
+function closeRest(){
+  if (closeCache) return closeCache;
+  let sum = 0;
+  for (const i of consonants) sum += M[i].w;
+  const y = lines[centreLine].y;
+  let run = 0;
+  closeCache = {};
+  for (const i of consonants){
+    closeCache[i] = { x:(W - sum) / 2 + run, y:y };
+    run += M[i].w;
+  }
+  return closeCache;
+}
+
+let finalGeo = null;                 // recomputed only when the layout changes
+function finalGeometry(){
+  if (finalGeo) return finalGeo;
+  let sum = 0;
+  for (const i of consonants) sum += M[i].w;
+  let size = fontSize;
+  if (CFG.FINAL_SCALE){
+    size = Math.min((W * CFG.FINAL_WIDTH_FRAC) * fontSize / sum,
+                    (H * CFG.FINAL_MAX_HEIGHT_FRAC) / Math.max(0.1, FM.cap));
+    size = Math.max(size, fontSize);
+  }
+  const k = size / fontSize;
+  const total = sum * k;
+
+  const base   = baselineFromTop(size);             // measured, not derived
+  const inkTop = base - FM.cap * size;              // ink top, from box top
+  const inkH   = (FM.cap + FM.capDesc) * size;
+  finalGeo = { size:size, k:k, x0:(W - total) / 2,
+               y:H / 2 - inkH / 2 - inkTop, inkH:inkH, base:base };
+  return finalGeo;
+}
+
+function render(t){
+  /* ---- 1. typing ---- */
+  const typed = Math.min(TEXT.length, Math.max(0, Math.floor(t / CFG.TYPE_MS_PER_CHAR)));
+  for (let i = shownUpto; i < typed; i++){ if (spans[i]) spans[i].classList.add('on'); }
+  if (typed > shownUpto) shownUpto = typed;
+
+  /* everything sits exactly where the browser typeset it, until travel */
+  if (t < T.travelStart){
+    for (let i = 0; i < TEXT.length; i++){
+      if (spans[i] && M[i]) place(spans[i], M[i].x, M[i].y);
+    }
+  }
+
+  /* ---- 2. random deletion (positions stay locked) ---- */
+  if (t >= T.delStart){
+    const n = Math.floor(easeInQuad(clamp01((t - T.delStart) / CFG.DELETE_MS)) * deleteOrder.length);
+    for (let i = deletedUpto; i < n; i++){
+      const el = spans[deleteOrder[i]];
+      if (el) el.classList.add('gone');
+    }
+    if (n > deletedUpto) deletedUpto = n;
+  }
+
+  /* ---- 3. the two words run along the ribbon of the typed lines,
+             accelerating, and crushing their tracking as they make
+             contact so the hit lands as a squash and not a stop ---- */
+  const crush = -CFG.TIGHTEN_EM * fontSize;
+
+  if (t >= T.travelStart && t < T.travelEnd){
+    const e  = easeInCubic(clamp01((t - T.travelStart) / CFG.TRAVEL_MS));
+    const sA = sStartA + (sTargetA - sStartA) * e;
+    const sB = sStartB + (sTargetB - sStartB) * e;
+    const d  = crush * impactRamp(t, T.travelEnd);
+    for (let k = 0; k < idxA.length; k++){
+      const i = idxA[k];
+      const p = xyOf(sA + offA[k] + (blockPos[i] - MID13) * d, M[i].w);
+      place(spans[i], p.x, p.y);
+    }
+    for (let k = 0; k < idxB.length; k++){
+      const i = idxB[k];
+      const p = xyOf(sB + offB[k] + (blockPos[i] - MID13) * d, M[i].w);
+      place(spans[i], p.x, p.y);
+    }
+  }
+
+  /* ---- 4. impact: the 13 letters spring back out of the squash ---- */
+  let squash1 = 0;
+  if (t >= T.travelEnd){
+    squash1 = crush * spring(t - T.travelEnd);
+    if (t < T.closeStart){
+      for (const i of survivorIdx){
+        if (vowelsDropped && isVowel(i)) continue;  // falling vowels own their transform
+        const p = collisionOf(i);
+        place(spans[i], p.x + (blockPos[i] - MID13) * squash1, p.y);
+      }
+    }
+  }
+
+  /* ---- 5. vowels drop out, from wherever they currently sit ---- */
+  if (t >= T.vowelStart && !vowelsDropped){
+    vowelsDropped = true;
+    vowels.forEach(function(i){
+      const el = spans[i], p = collisionOf(i);
+      const x = p.x + (blockPos[i] - MID13) * squash1;
+      el.style.setProperty('--dropms', CFG.VOWEL_DROP_MS + 'ms');
+      el.classList.add('drop');
+      requestAnimationFrame(function(){
+        el.style.transform =
+          'translate3d(' + x + 'px,' + (p.y + M[i].h * 2.2) + 'px,0) rotate('
+          + ((Math.random() * 26) - 13).toFixed(1) + 'deg)';
+      });
+    });
+  }
+
+  /* ---- 6. the gaps the vowels left slam shut - same collision ---- */
+  if (t >= T.closeStart){
+    const e    = easeInCubic(clamp01((t - T.closeStart) / CFG.CLOSE_MS));
+    const rest = closeRest();
+    const d    = crush * (t < T.closeEnd ? impactRamp(t, T.closeEnd)
+                                         : spring(t - T.closeEnd));
+    for (let k = 0; k < consonants.length; k++){
+      const i = consonants[k];
+      const from = collisionOf(i);
+      place(spans[i],
+            from.x + (rest[i].x - from.x) * e + (k - MID8) * d,
+            rest[i].y);
+    }
+  }
+
+  /* ---- 7. and finally the locked-up word grows into the wordmark ---- */
+  if (t >= T.growStart){
+    const e = easeOutCubic(clamp01((t - T.growStart) / CFG.GROW_MS));
+    const g = finalGeometry();
+    const rest = closeRest();
+    let run = 0;
+    for (let k = 0; k < consonants.length; k++){
+      const i = consonants[k];
+      const x1 = g.x0 + run;
+      run += M[i].w * g.k;
+      place(spans[i],
+            rest[i].x + (x1 - rest[i].x) * e,
+            rest[i].y + (g.y - rest[i].y) * e,
+            fontSize + (g.size - fontSize) * e);
+    }
+  }
+
+  /* ---- 6. end state ---- */
+  if (t >= T.settleEnd - 250 && !finished){
+    finished = true;
+    if (CFG.SHOW_STATEMENT_AT_END) statementEl.classList.add('shown');
+    replayBtn.classList.add('shown');
+    howLink.classList.add('shown');
+    showCTA();
+    window.__gld.done = true;
+    document.body.dataset.gld = JSON.stringify(window.__gld.info());
+    console.log('[gldtgthr] done ->', consonants.map(i => TEXT[i]).join('').toUpperCase());
+  }
+
+  phase = t < T.typeEnd ? 'typing'
+        : t < T.delStart ? 'pause'
+        : t < T.delEnd ? 'deleting'
+        : t < T.travelStart ? 'pause'
+        : t < T.travelEnd ? 'travelling'
+        : t < T.vowelStart ? 'locked'
+        : t < T.closeStart ? 'vowels-dropping'
+        : t < T.growStart ? 'closing'
+        : t < T.growEnd ? 'growing'
+        : 'done';
+  window.__gld.phase = phase;
+}
+
+/* ================================================================== *
+ * LOOP / RESET / RESIZE
+ * ================================================================== */
+let raf = 0, elapsed = 0;
+function frame(now){
+  elapsed = now - t0;
+  render(elapsed);
+  if (elapsed < T.settleEnd + 400) raf = requestAnimationFrame(frame);
+  else raf = 0;
+}
+
+function reset(skipToEnd){
+  cancelAnimationFrame(raf); raf = 0;
+  shownUpto = 0; deletedUpto = 0; vowelsDropped = false; finished = false;
+  for (let i = 0; i < TEXT.length; i++){
+    if (!spans[i]) continue;
+    spans[i].className = 'ch';
+    spans[i].style.cssText = '';
+  }
+  statementEl.classList.remove('shown');
+  replayBtn.classList.remove('shown');
+  howLink.classList.remove('shown');
+  cta.classList.remove('shown');
+  shuffleDeletionOrder();
+  relayout();
+  window.__gld.done = false;
+  t0 = performance.now() - (skipToEnd ? T.settleEnd + 300 : 0);
+  raf = requestAnimationFrame(frame);
+}
+
+let rzTimer = 0;
+window.addEventListener('resize', function(){
+  clearTimeout(rzTimer);
+  rzTimer = setTimeout(function(){
+    try {
+      const wasDone = elapsed >= T.settleEnd;
+      /* re-typeset for the new window, then redraw the current moment on it */
+      const savedShown = shownUpto;
+      relayout();
+      shownUpto = savedShown;
+      render(wasDone ? T.settleEnd + 400 : elapsed);
+      if (cta.classList.contains('shown')) placeCTA();
+    } catch(e){ fail(e); }
+  }, 80);
+});
+
+replayBtn.addEventListener('click', function(){ reset(false); });
+window.addEventListener('keydown', function(e){
+  if (sheetOpen){ if (e.key === 'Escape') closeSheet(); return; }
+  const tag = e.target && e.target.tagName;
+  if (tag === 'BUTTON' || tag === 'A' || tag === 'INPUT') return;  // space activates buttons
+  if (e.key === 'r' || e.key === 'R'){ e.preventDefault(); reset(false); }
+});
+
+/* ================================================================== *
+ * CALL TO ACTION
+ * ================================================================== */
+function browserName(){
+  const ua = navigator.userAgent;
+  if (/Edg\//.test(ua))     return 'Edge';
+  if (/OPR\//.test(ua))     return 'Opera';
+  if (/Firefox\//.test(ua)) return 'Firefox';
+  if (/Chrome\//.test(ua))  return 'Chrome';
+  if (/Safari\//.test(ua))  return 'Safari';
+  return 'browser';
+}
+installBtn.textContent = 'Add to ' + browserName();
+
+let sheetOpen = false, lastFocus = null;
+
+function openSheet(title, paras, trigger){
+  /* remember the button explicitly: a mouse click does not focus a button
+     in every browser, so document.activeElement is not reliable here */
+  lastFocus = trigger || document.activeElement;
+  sheetTitle.textContent = title;
+  sheetBody.innerHTML = '';
+  paras.forEach(function(t){
+    const el = document.createElement('p');
+    if (t.note) el.className = 'note';
+    el.textContent = t.text !== undefined ? t.text : t;
+    sheetBody.appendChild(el);
+  });
+  sheet.hidden = false;
+  sheetOpen = true;
+  sheetClose.focus();
+}
+function closeSheet(){
+  sheet.hidden = true;
+  sheetOpen = false;
+  if (lastFocus && lastFocus.focus) lastFocus.focus();
+}
+sheetClose.addEventListener('click', closeSheet);
+sheet.addEventListener('click', function(e){ if (e.target === sheet) closeSheet(); });
+
+installBtn.addEventListener('click', function(){
+  if (ENDPOINTS.install){ window.location.href = ENDPOINTS.install; return; }
+  openSheet('Not installable yet', [
+    'gldtgthr is a browser extension. It is not published to the ' + browserName()
+      + ' store yet, so there is nothing to install from this page today.',
+    'When it ships, it will ask to read the pages you visit. That is what lets it '
+      + 'categorise what you actually spend your screen life on, and find the people '
+      + 'whose overlaps with yours.',
+    { text: 'What it keeps, what it never keeps, and what another person can see about '
+      + 'you will be stated here - in full - before this button installs anything.',
+      note: true },
+    { text: 'Read exactly how it works, in plain terms: how-it-works.html',
+      note: true }
+  ], installBtn);
+});
+
+loginBtn.addEventListener('click', function(){
+  if (ENDPOINTS.login){ window.location.href = ENDPOINTS.login; return; }
+  openSheet('Accounts are not open yet', [
+    'There is no account to log in to yet. Sign-in arrives with the extension, '
+      + 'because the account only means anything once there is something to match on.',
+    { text: 'This page is a concept preview.', note: true }
+  ], loginBtn);
+});
+
+/* sit the buttons under the wordmark, never overlapping it or the
+   statement, at whatever size the window happens to be */
+function placeCTA(){
+  if (!lines.length) return;
+  const g = finalGeometry();
+  const inkBottom = H / 2 + g.inkH / 2;
+  const ctaH = cta.offsetHeight || 46;
+  let top = inkBottom + Math.max(26, H * 0.06);
+  const stTop = statementEl.getBoundingClientRect().top;
+  const limit = (stTop > 0 ? stTop : H) - ctaH - 16;
+  if (top > limit) top = Math.max(inkBottom + 10, limit);
+  cta.style.top = Math.round(top) + 'px';
+}
+function showCTA(){ placeCTA(); cta.classList.add('shown'); requestAnimationFrame(placeCTA); }
+
+/* the buttons are the point of the page, so let people reach them
+   without sitting through the whole thing.
+
+   A click can land before the webfont has loaded and the animation has even
+   begun - the markup is there from the first byte. Skipping then would be
+   undone a moment later when it starts for real, so remember the intent and
+   honour it at startup instead. */
+let pendingSkip = !!window.__gldEarlyClick;
+function skipToEnd(){
+  if (!started){ pendingSkip = true; return; }
+  if (elapsed >= T.settleEnd) return;
+  t0 = performance.now() - (T.settleEnd + 320);
+  if (!raf) raf = requestAnimationFrame(frame);
+}
+stage.addEventListener('click', skipToEnd);
+
+/* ================================================================== *
+ * START
+ * ================================================================== */
+window.__gld = { phase:'idle', done:false, info:function(){
+  return { W:W, H:H, fontSize:Math.round(fontSize), lines:lines.length,
+           ribbon:Math.round(ribbon), centreLine:centreLine,
+           sStartA:Math.round(sStartA), sTargetA:Math.round(sTargetA),
+           sStartB:Math.round(sStartB), sTargetB:Math.round(sTargetB),
+           dirA:(sTargetA - sStartA) > 0 ? 'forward' : 'backward',
+           dirB:(sTargetB - sStartB) > 0 ? 'forward' : 'backward',
+           cap:Number(FM.cap.toFixed(4)), capDesc:Number(FM.capDesc.toFixed(4)),
+           fontMatch:Number(FM.match.toFixed(4)),
+           survivors:consonants.map(i => TEXT[i]).join('').toUpperCase() };
+}};
+
+statementEl.innerHTML = CFG.TEXT
+  .replace(/glued/i, '<b>glued</b>')
+  .replace(/together/i, '<b>together</b>');
+
+function start(){
+  try {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    reset(reduce || pendingSkip || window.__gldEarlyClick);
+    document.body.dataset.gldFit = JSON.stringify(window.__gld.info());
+    console.log('[gldtgthr] fitted', JSON.stringify(window.__gld.info()));
+  } catch (e){ fail(e); }
+}
+
+/* Start when the webfont is ready - but NEVER hang on it. If the font
+   request is blocked or slow, draw with whatever face is available and
+   re-typeset later if the real one turns up. Waiting forever on
+   document.fonts.ready is a silent black screen, which is the worst
+   possible failure: nothing on screen and nothing in the console. */
+let started = false;
+function startOnce(why){
+  if (started) return;
+  started = true;
+  console.log('[gldtgthr] starting (' + why + ')');
+  start();
+}
+
+if (document.fonts && document.fonts.ready){
+  document.fonts.ready.then(function(){
+    if (!started) startOnce('webfont ready');
+    else {
+      /* the real face arrived after we began - re-fit to it in place */
+      try { relayout(); render(elapsed); console.log('[gldtgthr] re-fitted to webfont'); }
+      catch (e){ fail(e); }
+    }
+  });
+}
+else {
+  /* no font loading API at all - go as soon as the document is up */
+  if (document.readyState === 'complete') startOnce('document already loaded');
+  else window.addEventListener('load', function(){ startOnce('document loaded'); });
+}
+/* the cap: whatever happens with the font, we draw by now */
+setTimeout(function(){ startOnce('font wait timed out'); }, CFG.FONT_WAIT_MS);
+
+/* watchdog: if the screen is still empty, say so out loud rather than
+   sitting there black */
+setTimeout(function(){
+  if (!started){
+    fail(new Error('never started - no font event and no load event fired'));
+  } else if (!document.querySelector('.ch.on')){
+    fail(new Error('started but nothing was drawn (fit gave '
+      + Math.round(fontSize) + 'px over ' + lines.length + ' lines)'));
+  }
+}, 3500);
+
+})();
+</script>
+</body>
+</html>
